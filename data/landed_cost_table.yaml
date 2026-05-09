@@ -1,0 +1,62 @@
+# Таблица для расчёта landed cost международных refurb-предложений → KZT.
+# ОБНОВЛЯТЬ ВРУЧНУЮ раз в 1-2 месяца (курсы валют, тарифы).
+# Дата последнего обновления указывать в last_updated.
+
+last_updated: "2026-05-09"
+maintained_by: "Копылов Кирилл"
+
+# Курсы валют к KZT (актуально на last_updated)
+fx_rates_to_kzt:
+  USD: 480.0
+  EUR: 520.0
+  GBP: 605.0
+  AED: 130.0
+  SGD: 355.0
+
+# Таможенные правила Казахстана для физ.лиц (упрощённая модель).
+# Пороги меняются — сверять с tengrinews/zakon.kz при обновлении.
+customs_kz:
+  duty_free_limit_eur: 200       # ниже этого — без пошлины
+  duty_rate_percent: 5           # пошлина с превышения
+  vat_rate_percent: 12           # НДС на превышение
+  # Формула: если value_eur > 200 → duty = (value_eur - 200) * 0.05; vat = (value_eur - 200) * 0.12
+  # Иначе duty=0, vat=0
+
+# Тарифы посредников/доставщиков (USD за фунт или фиксированно).
+# MacBook Pro 14"/16" ≈ 4-5 фунтов в коробке.
+forwarders:
+  shipito_usa:
+    base_fee_usd: 35
+    per_lb_usd: 12
+    estimated_weight_lb_macbook_14: 5
+    estimated_weight_lb_macbook_16: 6
+    typical_delivery_days: 14
+  pochtoy_usa:
+    base_fee_usd: 25
+    per_lb_usd: 10
+    estimated_weight_lb_macbook_14: 5
+    estimated_weight_lb_macbook_16: 6
+    typical_delivery_days: 18
+  myparcel_uk:
+    base_fee_gbp: 30
+    per_kg_gbp: 8
+    estimated_weight_kg_macbook_14: 2.3
+    estimated_weight_kg_macbook_16: 2.7
+    typical_delivery_days: 16
+
+# Источник → дефолтный посредник
+default_forwarder_by_source:
+  apple_refurb_us: shipito_usa
+  bh_used: shipito_usa
+  back_market: shipito_usa
+  swappa: shipito_usa
+  ebay: shipito_usa
+  amazon_renewed: shipito_usa
+  refurbme: shipito_usa
+  apple_refurb_uk: myparcel_uk
+  apple_refurb_sg: shipito_usa  # placeholder, проверить
+  apple_refurb_uae: shipito_usa # placeholder, проверить
+
+# Доп. накладные (страховка, риск возврата). В процентах от item price.
+overhead_percent: 3
+risk_premium_percent: 5  # буфер на возможный возврат/брак refurbished

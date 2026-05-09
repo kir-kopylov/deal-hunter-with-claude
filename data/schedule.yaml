@@ -1,0 +1,116 @@
+timezone: Asia/Almaty
+
+# Edit this file to change schedule. After edit:
+#   python3 ~/.claude/scripts/generate_launchd.py
+#   launchctl unload ~/Library/LaunchAgents/com.kkopylov.deals.*.plist
+#   launchctl load   ~/Library/LaunchAgents/com.kkopylov.deals.*.plist
+
+groups:
+  baseline:
+    label: "Пересчёт baseline price"
+    sources: [internal]
+    schedule:
+      - { day: "*", hour: 8, minute: 30 }
+
+  A1:
+    label: "KZ маркетплейсы (OLX, Kaspi Объявления)"
+    sources: [olx_kz, kaspi_objavleniya]
+    schedule:
+      - { day: "*", hour: 9,  minute: 0 }
+      - { day: "*", hour: 14, minute: 0 }
+      - { day: "*", hour: 20, minute: 0 }
+
+  A2:
+    label: "KZ агрегаторы (E-Katalog, Alfa, Kaspi Shop)"
+    sources: [e_katalog, alfa_kz, kaspi_shop]
+    schedule:
+      - { day: "*", hour: 10, minute: 15 }
+
+  A3:
+    label: "KZ Apple-реселлеры"
+    sources: [gadgetstore, kansha, freshmobile, tehcom, asbc, almajuice, mobilion, kiosk]
+    schedule:
+      - { day: ["mon", "wed", "fri", "sat"], hour: 11, minute: 30 }
+
+  B:
+    label: "Электроника KZ"
+    sources: [sulpak, technodom, dns_kz, mechta, alser, fora]
+    schedule:
+      - { day: ["tue", "fri"], hour: 12, minute: 45 }
+
+  C:
+    label: "Международные refurb"
+    sources:
+      - apple_refurb_us
+      - apple_refurb_uk
+      - apple_refurb_sg
+      - apple_refurb_uae
+      - bh_used
+      - back_market
+      - swappa
+      - ebay
+      - amazon_renewed
+      - refurbme
+    schedule:
+      - { day: ["wed", "sat"], hour: 13, minute: 0 }
+
+# Source endpoints (URL patterns, search params). Master prompt reads this to know
+# what to fetch for each source. Use {query} as placeholder for search query.
+source_endpoints:
+  olx_kz:
+    search_url: "https://www.olx.kz/elektronika/noutbuki-netbuki/q-{query}/"
+    fetcher: playwright
+    queries:
+      - "macbook pro m3 pro 36 1tb"
+      - "macbook pro m3 36gb 1tb"
+      - "macbook pro 36gb 1tb"
+      - "макбук про m3 pro 36"
+      - "macbook m3 max 36 1tb"
+  kaspi_objavleniya:
+    search_url: "https://kaspi.kz/shop/search/?text={query}&hint_chips_click=false"
+    fetcher: playwright
+    queries:
+      - "macbook pro m3 pro"
+      - "macbook pro 36gb"
+  e_katalog:
+    search_url: "https://www.e-katalog.kz/list/170/?search_={query}"
+    fetcher: webfetch
+    queries:
+      - "MacBook Pro M3 Pro"
+  alfa_kz:
+    search_url: "https://alfa.kz/laptops/apple?search={query}"
+    fetcher: webfetch
+    queries: ["MacBook Pro M3"]
+  kaspi_shop:
+    search_url: "https://kaspi.kz/shop/c/macbook/?text={query}"
+    fetcher: webfetch
+    queries: ["MacBook Pro M3 Pro 36 1TB"]
+  sulpak:
+    search_url: "https://www.sulpak.kz/search/?searchstring={query}"
+    fetcher: webfetch
+    queries: ["MacBook Pro M3 Pro 36 1TB"]
+  technodom:
+    search_url: "https://www.technodom.kz/katalog/noutbuki?q={query}"
+    fetcher: webfetch
+    queries: ["MacBook Pro M3"]
+  dns_kz:
+    search_url: "https://www.dns-shop.kz/search/?q={query}"
+    fetcher: webfetch
+    queries: ["MacBook Pro M3"]
+  apple_refurb_us:
+    search_url: "https://www.apple.com/shop/refurbished/mac/macbook-pro"
+    fetcher: webfetch
+    queries: [""]
+  apple_refurb_uk:
+    search_url: "https://www.apple.com/uk/shop/refurbished/mac/macbook-pro"
+    fetcher: webfetch
+    queries: [""]
+  back_market:
+    search_url: "https://www.backmarket.com/en-us/l/macbook-pro/{query}"
+    fetcher: webfetch
+    queries: ["macbook-pro-14-m3-pro"]
+  swappa:
+    search_url: "https://swappa.com/listings/apple-macbook-pro?q={query}"
+    fetcher: webfetch
+    queries: ["m3 pro 36 1tb"]
+  # ... остальные источники добавить по мере необходимости
