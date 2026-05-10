@@ -2,6 +2,7 @@
 
 Каждый prod-запуск также вызывает эти проверки fail-fast в run-deals.sh.
 """
+
 from __future__ import annotations
 
 import os
@@ -38,7 +39,9 @@ class TestScheduleYaml:
             assert "label" in group, f"Group {name}: missing label"
             assert "sources" in group, f"Group {name}: missing sources"
             assert "schedule" in group, f"Group {name}: missing schedule"
-            assert isinstance(group["sources"], list) and group["sources"], f"Group {name}: empty sources"
+            assert isinstance(group["sources"], list) and group["sources"], (
+                f"Group {name}: empty sources"
+            )
             assert group["schedule"], f"Group {name}: empty schedule"
 
     def test_schedule_entries_valid(self):
@@ -72,12 +75,19 @@ class TestSheetColumnsYaml:
         self.cfg = _load("sheet_columns_ru.yaml")
 
     def test_has_required_tabs(self):
-        for tab in ["Deals", "Baseline_Prices", "Price_History", "Source_Check_Log",
-                    "Hot_Deals", "Pending_Help_Queue"]:
+        for tab in [
+            "Deals",
+            "Baseline_Prices",
+            "Price_History",
+            "Source_Check_Log",
+            "Hot_Deals",
+            "Pending_Help_Queue",
+        ]:
             assert tab in self.cfg, f"Missing tab: {tab}"
 
     def test_internal_keys_are_snake_case(self):
         import re
+
         pat = re.compile(r"^[a-z][a-z0-9_]*$")
         for tab, mapping in self.cfg.items():
             if tab == "enums":
@@ -125,6 +135,7 @@ class TestLandedCostYaml:
 
     def test_has_last_updated(self):
         import re
+
         assert re.match(r"^\d{4}-\d{2}-\d{2}$", str(self.cfg["last_updated"]))
 
     def test_has_fx_rates(self):

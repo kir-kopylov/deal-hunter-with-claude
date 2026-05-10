@@ -21,14 +21,14 @@
 - При недоступности Sheets API — записывает в $DEAL_HUNTER_HOME/state/stash.jsonl, возвращает ненулевой exit
 - Schema validation: будущая интеграция через jsonschema (placeholder)
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
 import sys
-import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
@@ -83,13 +83,19 @@ def stash_rows(tab: str, mode: str, rows: list[dict], reason: str) -> None:
     STASH_FILE.parent.mkdir(parents=True, exist_ok=True)
     with STASH_FILE.open("a") as f:
         for row in rows:
-            f.write(json.dumps({
-                "tab": tab,
-                "mode": mode,
-                "row": row,
-                "reason": reason,
-                "stashed_at_almaty": now_almaty_iso(),
-            }, ensure_ascii=False) + "\n")
+            f.write(
+                json.dumps(
+                    {
+                        "tab": tab,
+                        "mode": mode,
+                        "row": row,
+                        "reason": reason,
+                        "stashed_at_almaty": now_almaty_iso(),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
 
 
 def english_to_russian_row(row_en: dict, mapping: dict[str, str], headers: list[str]) -> list:
@@ -173,7 +179,7 @@ def cmd_upsert(ws, mapping: dict[str, str], rows: list[dict], key: str) -> dict:
         else:
             # Existing — preserve first_seen_at_almaty from sheet
             existing_values = ws.row_values(existing_row_num)
-            existing_dict = dict(zip(headers, existing_values))
+            existing_dict = dict(zip(headers, existing_values, strict=False))
             preserved = {}
             if "first_seen_at_almaty" in mapping:
                 fsa_ru = mapping["first_seen_at_almaty"]
@@ -289,12 +295,18 @@ def main() -> int:
         return 0
     except Exception as e:
         stash_rows(args.tab, args.mode, rows, str(e))
-        print(json.dumps({
-            "ok": False,
-            "error": str(e),
-            "stashed_count": len(rows),
-            "stash_file": str(STASH_FILE),
-        }, ensure_ascii=False), file=sys.stderr)
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": str(e),
+                    "stashed_count": len(rows),
+                    "stash_file": str(STASH_FILE),
+                },
+                ensure_ascii=False,
+            ),
+            file=sys.stderr,
+        )
         return 2
 
 

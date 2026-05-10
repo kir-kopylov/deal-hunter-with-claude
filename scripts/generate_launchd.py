@@ -6,6 +6,7 @@ Run after editing schedule.yaml:
     launchctl unload ~/Library/LaunchAgents/com.kkopylov.deals.*.plist 2>/dev/null
     launchctl load   ~/Library/LaunchAgents/com.kkopylov.deals.*.plist
 """
+
 from __future__ import annotations
 
 import os
@@ -25,7 +26,13 @@ SCRIPT = DEAL_HUNTER_HOME / "scripts" / "run-deals.sh"
 LABEL_PREFIX = "com.kkopylov.deals"
 
 DAY_NAME_TO_NUM = {
-    "sun": 0, "mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6,
+    "sun": 0,
+    "mon": 1,
+    "tue": 2,
+    "wed": 3,
+    "thu": 4,
+    "fri": 5,
+    "sat": 6,
 }
 
 
@@ -43,11 +50,13 @@ def calendar_intervals_for_group(schedules: list[dict]) -> list[dict]:
             for d in day_list:
                 if d not in DAY_NAME_TO_NUM:
                     raise ValueError(f"Unknown day: {d!r}. Use sun/mon/.../sat.")
-                out.append({
-                    "Weekday": DAY_NAME_TO_NUM[d],
-                    "Hour": hour,
-                    "Minute": minute,
-                })
+                out.append(
+                    {
+                        "Weekday": DAY_NAME_TO_NUM[d],
+                        "Hour": hour,
+                        "Minute": minute,
+                    }
+                )
     return out
 
 
@@ -55,9 +64,7 @@ def render_plist(label: str, group: str, intervals: list[dict]) -> str:
     """Render a launchd plist XML for one group."""
     interval_xml = ""
     for iv in intervals:
-        items = "\n        ".join(
-            f"<key>{k}</key><integer>{v}</integer>" for k, v in iv.items()
-        )
+        items = "\n        ".join(f"<key>{k}</key><integer>{v}</integer>" for k, v in iv.items())
         interval_xml += f"      <dict>\n        {items}\n      </dict>\n"
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

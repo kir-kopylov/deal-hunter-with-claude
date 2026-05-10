@@ -4,6 +4,7 @@
 NB: реальный калькулятор пока не выделен в модуль — здесь тесты задают КОНТРАКТ
 формулы. Когда landed_cost_calc.py появится, импортируется отсюда.
 """
+
 from __future__ import annotations
 
 import os
@@ -33,17 +34,20 @@ def calc_landed_cost(
     overhead = cfg["overhead_percent"] / 100.0
     risk = cfg["risk_premium_percent"] / 100.0
 
-    # FX to USD-equivalent for forwarder (most are USD-priced)
-    item_usd = item_price * fx[item_currency] / fx["USD"]
-
     # Forwarder shipping
     if "per_lb_usd" in fwd:
-        weight = (fwd["estimated_weight_lb_macbook_14"]
-                  if "14" in screen_size else fwd["estimated_weight_lb_macbook_16"])
+        weight = (
+            fwd["estimated_weight_lb_macbook_14"]
+            if "14" in screen_size
+            else fwd["estimated_weight_lb_macbook_16"]
+        )
         shipping_usd = fwd["base_fee_usd"] + weight * fwd["per_lb_usd"]
     elif "per_kg_gbp" in fwd:
-        weight = (fwd["estimated_weight_kg_macbook_14"]
-                  if "14" in screen_size else fwd["estimated_weight_kg_macbook_16"])
+        weight = (
+            fwd["estimated_weight_kg_macbook_14"]
+            if "14" in screen_size
+            else fwd["estimated_weight_kg_macbook_16"]
+        )
         shipping_gbp = fwd["base_fee_gbp"] + weight * fwd["per_kg_gbp"]
         shipping_usd = shipping_gbp * fx["GBP"] / fx["USD"]
     else:
@@ -121,8 +125,9 @@ class TestLandedCost:
 
     def test_total_breakdown_sums_correctly(self, cfg):
         r = calc_landed_cost(1899, "USD", "apple_refurb_us", "14", cfg)
-        partial_sum = (r["item_kzt"] + r["shipping_kzt"] + r["customs_kzt"]
-                       + r["overhead_kzt"] + r["risk_kzt"])
+        partial_sum = (
+            r["item_kzt"] + r["shipping_kzt"] + r["customs_kzt"] + r["overhead_kzt"] + r["risk_kzt"]
+        )
         assert abs(r["total_kzt"] - partial_sum) <= 5  # rounding tolerance
 
     def test_back_market_uses_us_forwarder(self, cfg):

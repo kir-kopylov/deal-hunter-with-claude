@@ -5,9 +5,10 @@ Edge cases для system, который сильно зависит от вре
 - cadence «mon/wed/fri» в воскресенье 23:59 vs понедельник 00:01
 - stale-queue alert ровно через 24ч
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -16,7 +17,10 @@ try:
 except ImportError:
     freeze_time = None
 
-pytestmark = [pytest.mark.unit, pytest.mark.skipif(freeze_time is None, reason="freezegun not installed")]
+pytestmark = [
+    pytest.mark.unit,
+    pytest.mark.skipif(freeze_time is None, reason="freezegun not installed"),
+]
 
 
 ALMATY_TZ = timezone(timedelta(hours=5))

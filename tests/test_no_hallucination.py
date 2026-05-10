@@ -7,6 +7,7 @@
 Маркер @pytest.mark.expensive — каждый тест вызывает Claude API.
 Прогонять перед мерджем изменений в master prompt и при апдейте модели.
 """
+
 from __future__ import annotations
 
 import json
@@ -50,7 +51,9 @@ HTML страницы (источник: {fixture_name}):
 
     result = subprocess.run(
         ["claude", "-p", "--bare", prompt],
-        capture_output=True, text=True, timeout=120,
+        capture_output=True,
+        text=True,
+        timeout=120,
     )
     out = result.stdout.strip()
     # Try to find JSON in output

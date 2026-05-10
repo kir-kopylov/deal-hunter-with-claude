@@ -1,4 +1,5 @@
 """Shared pytest fixtures and configuration."""
+
 from __future__ import annotations
 
 import os
@@ -23,7 +24,9 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 def pytest_configure(config):
     config.addinivalue_line("markers", "unit: fast tests, no network, included in pre-commit")
     config.addinivalue_line("markers", "integration: tests that hit real Google Sheets API")
-    config.addinivalue_line("markers", "expensive: tests that call Claude/Anthropic API (cost money)")
+    config.addinivalue_line(
+        "markers", "expensive: tests that call Claude/Anthropic API (cost money)"
+    )
 
 
 @pytest.fixture
