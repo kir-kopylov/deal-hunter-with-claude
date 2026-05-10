@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Generate launchd plist files from ~/.claude/data/schedule.yaml.
+"""Generate launchd plist files from $DEAL_HUNTER_HOME/data/schedule.yaml.
 
 Run after editing schedule.yaml:
-    python3 ~/.claude/scripts/generate_launchd.py
+    python3 $DEAL_HUNTER_HOME/scripts/generate_launchd.py
     launchctl unload ~/Library/LaunchAgents/com.kkopylov.deals.*.plist 2>/dev/null
     launchctl load   ~/Library/LaunchAgents/com.kkopylov.deals.*.plist
 """
@@ -16,10 +16,11 @@ from xml.sax.saxutils import escape
 import yaml
 
 HOME = Path.home()
-SCHEDULE_YAML = HOME / ".claude" / "data" / "schedule.yaml"
+DEAL_HUNTER_HOME = Path(os.environ.get("DEAL_HUNTER_HOME", str(HOME / ".claude")))
+SCHEDULE_YAML = DEAL_HUNTER_HOME / "data" / "schedule.yaml"
 LAUNCH_AGENTS = HOME / "Library" / "LaunchAgents"
-LOG_DIR = HOME / ".claude" / "logs"
-SCRIPT = HOME / ".claude" / "scripts" / "run-deals.sh"
+LOG_DIR = DEAL_HUNTER_HOME / "logs"
+SCRIPT = DEAL_HUNTER_HOME / "scripts" / "run-deals.sh"
 
 LABEL_PREFIX = "com.kkopylov.deals"
 
@@ -87,6 +88,8 @@ def render_plist(label: str, group: str, intervals: list[dict]) -> str:
     <string>{escape(group)}</string>
     <key>HOME</key>
     <string>{escape(str(HOME))}</string>
+    <key>DEAL_HUNTER_HOME</key>
+    <string>{escape(str(DEAL_HUNTER_HOME))}</string>
   </dict>
 </dict>
 </plist>

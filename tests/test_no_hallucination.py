@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -19,8 +20,9 @@ import pytest
 pytestmark = pytest.mark.expensive
 
 
-GARBAGE_DIR = Path.home() / ".claude" / "tests" / "golden" / "garbage_pages"
-MASTER_PROMPT = Path.home() / ".claude" / "prompts" / "deal-hunter-master.md"
+_HOME = Path(os.environ.get("DEAL_HUNTER_HOME", str(Path.home() / ".claude")))
+GARBAGE_DIR = _HOME / "tests" / "golden" / "garbage_pages"
+MASTER_PROMPT = _HOME / "prompts" / "deal-hunter-master.md"
 
 
 def _claude_available() -> bool:

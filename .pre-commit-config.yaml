@@ -1,0 +1,52 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: ^\.github/workflows/
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: \.(py)$
+      - id: ruff-format
+        files: \.(py)$
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c, .yamllint.yaml]
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: ^\.secrets\.baseline$
+
+  - repo: local
+    hooks:
+      - id: no-secrets-paths
+        name: block secrets/ committed
+        entry: bash -c 'if git diff --cached --name-only | grep -E "(secrets/|sheets-sa\.json|service-account.*\.json|\.env\.deals$)"; then echo "ОШИБКА: попытка закоммитить файл секрета"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      - id: validate-yaml-configs
+        name: validate runtime YAML configs
+        entry: bash -c 'for f in data/schedule.yaml data/sheet_columns_ru.yaml data/landed_cost_table.yaml; do python3 -c "import yaml; yaml.safe_load(open(\"$f\"))" || exit 1; done'
+        language: system
+        files: ^data/.*\.yaml$
+        pass_filenames: false

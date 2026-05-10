@@ -5,7 +5,7 @@
 ## Что уже сделано (автоматически)
 
 ```
-~/.claude/
+$DEAL_HUNTER_HOME/
 ├── data/
 │   ├── schedule.yaml              ← редактируешь руками для смены cadence
 │   ├── sheet_columns_ru.yaml      ← редактируешь для русских заголовков Sheet
@@ -44,8 +44,8 @@
 ### 1. Python окружение
 
 ```bash
-python3 -m venv ~/.claude/venv
-source ~/.claude/venv/bin/activate
+python3 -m venv $DEAL_HUNTER_HOME/venv
+source $DEAL_HUNTER_HOME/venv/bin/activate
 pip install --upgrade pip
 pip install playwright playwright-stealth gspread google-auth pyyaml \
             pydantic jsonschema pytest freezegun structlog approvaltests
@@ -58,7 +58,7 @@ playwright install chromium
 2. **APIs & Services → Library** → включи `Google Sheets API` и `Google Drive API`.
 3. **IAM & Admin → Service Accounts → Create service account**.
 4. У созданного аккаунта **Keys → Add key → Create new key → JSON** → скачай файл.
-5. Сохрани его как `~/.claude/secrets/sheets-sa.json` и `chmod 600`.
+5. Сохрани его как `$DEAL_HUNTER_HOME/secrets/sheets-sa.json` и `chmod 600`.
 
 ### 3. Создай Google Sheet
 
@@ -77,9 +77,9 @@ playwright install chromium
 ### 5. Файл секретов
 
 ```bash
-cp ~/.claude/secrets/.env.deals.template ~/.claude/secrets/.env.deals
-chmod 600 ~/.claude/secrets/.env.deals
-nano ~/.claude/secrets/.env.deals  # вставь TG_TOKEN, TG_CHAT_ID, SHEET_ID
+cp $DEAL_HUNTER_HOME/secrets/.env.deals.template $DEAL_HUNTER_HOME/secrets/.env.deals
+chmod 600 $DEAL_HUNTER_HOME/secrets/.env.deals
+nano $DEAL_HUNTER_HOME/secrets/.env.deals  # вставь TG_TOKEN, TG_CHAT_ID, SHEET_ID
 ```
 
 ### 6. Chrome extension Claude in Chrome
@@ -93,7 +93,7 @@ nano ~/.claude/secrets/.env.deals  # вставь TG_TOKEN, TG_CHAT_ID, SHEET_ID
 ### 7. Сгенерируй и загрузи launchd plist'ы
 
 ```bash
-python3 ~/.claude/scripts/generate_launchd.py
+python3 $DEAL_HUNTER_HOME/scripts/generate_launchd.py
 launchctl unload ~/Library/LaunchAgents/com.kkopylov.deals.*.plist 2>/dev/null
 launchctl load   ~/Library/LaunchAgents/com.kkopylov.deals.*.plist
 launchctl list | grep com.kkopylov.deals  # должно быть 6 строк
@@ -104,8 +104,8 @@ launchctl list | grep com.kkopylov.deals  # должно быть 6 строк
 #### 8.1 — unit-тесты быстрые
 
 ```bash
-source ~/.claude/venv/bin/activate
-pytest -m unit ~/.claude/tests/
+source $DEAL_HUNTER_HOME/venv/bin/activate
+pytest -m unit $DEAL_HUNTER_HOME/tests/
 ```
 
 Должны пройти `test_schemas.py`, `test_landed_cost.py`, `test_time.py` (если freezegun стоит), частично `test_listing_lifecycle.py`. Скелет-тесты в `test_e2e_day.py` будут skipped — это ок.
@@ -113,11 +113,11 @@ pytest -m unit ~/.claude/tests/
 #### 8.2 — auto mode на простой группе
 
 ```bash
-bash ~/.claude/scripts/run-deals.sh A2
+bash $DEAL_HUNTER_HOME/scripts/run-deals.sh A2
 ```
 
 Проверь:
-- Лог в `~/.claude/logs/deals-A2-*.log` без ошибок.
+- Лог в `$DEAL_HUNTER_HOME/logs/deals-A2-*.log` без ошибок.
 - В Sheet `Source_Check_Log` появилась строка с `status=ok`.
 - В Sheet `Deals` появились новые строки (или 0, если нет MacBook на момент запуска — это ок).
 - В Telegram прилетел `✅ RUN_SUMMARY`.
@@ -125,13 +125,13 @@ bash ~/.claude/scripts/run-deals.sh A2
 #### 8.3 — assisted mode end-to-end (ключевой тест)
 
 ```bash
-bash ~/.claude/scripts/run-deals.sh A1
+bash $DEAL_HUNTER_HOME/scripts/run-deals.sh A1
 ```
 
 Скорее всего получишь 🆘 HELP_NEEDED в Telegram. Тогда:
 
 ```bash
-bash ~/.claude/scripts/help-deals.sh
+bash $DEAL_HUNTER_HOME/scripts/help-deals.sh
 ```
 
 Это откроет интерактивную Claude Code сессию. Агент должен:
@@ -154,27 +154,27 @@ bash ~/.claude/scripts/help-deals.sh
 
 | Что | Как часто | Команда |
 |---|---|---|
-| Обновить курсы валют + пошлину | 1-2 месяца | редактировать `~/.claude/data/landed_cost_table.yaml` |
-| Изменить расписание | по необходимости | редактировать `~/.claude/data/schedule.yaml` → `python3 ~/.claude/scripts/generate_launchd.py` → `launchctl unload && load` |
+| Обновить курсы валют + пошлину | 1-2 месяца | редактировать `$DEAL_HUNTER_HOME/data/landed_cost_table.yaml` |
+| Изменить расписание | по необходимости | редактировать `$DEAL_HUNTER_HOME/data/schedule.yaml` → `python3 $DEAL_HUNTER_HOME/scripts/generate_launchd.py` → `launchctl unload && load` |
 | Добавить новый источник | по необходимости | `schedule.yaml` (sources + endpoints) → если KZ — добавить парсер в `fetch_kz.py` + fixtures |
-| Поменять русский заголовок колонки | по необходимости | редактировать `~/.claude/data/sheet_columns_ru.yaml` (без перезапуска) |
-| Прогнать тесты | перед изменениями | `pytest -m unit ~/.claude/tests/` |
-| Прогнать anti-hallucination | перед изменением мастер-промпта | `pytest -m expensive ~/.claude/tests/test_no_hallucination.py` |
+| Поменять русский заголовок колонки | по необходимости | редактировать `$DEAL_HUNTER_HOME/data/sheet_columns_ru.yaml` (без перезапуска) |
+| Прогнать тесты | перед изменениями | `pytest -m unit $DEAL_HUNTER_HOME/tests/` |
+| Прогнать anti-hallucination | перед изменением мастер-промпта | `pytest -m expensive $DEAL_HUNTER_HOME/tests/test_no_hallucination.py` |
 
 ## Что делать когда что-то не работает
 
 | Симптом | Где смотреть |
 |---|---|
-| launchd не запускает | `launchctl list \| grep deals`, `~/.claude/logs/launchd-*.err` |
-| Sheets не пишется | `~/.claude/state/stash.jsonl` (rows в ожидании), сообщение в stderr |
-| Telegram не приходит | `~/.claude/logs/tg_failed.log` |
-| Playwright блокируется | `~/.claude/logs/fetch_kz_screenshots/` (скриншот challenge-страницы) |
+| launchd не запускает | `launchctl list \| grep deals`, `$DEAL_HUNTER_HOME/logs/launchd-*.err` |
+| Sheets не пишется | `$DEAL_HUNTER_HOME/state/stash.jsonl` (rows в ожидании), сообщение в stderr |
+| Telegram не приходит | `$DEAL_HUNTER_HOME/logs/tg_failed.log` |
+| Playwright блокируется | `$DEAL_HUNTER_HOME/logs/fetch_kz_screenshots/` (скриншот challenge-страницы) |
 | Тесты падают на YAML | проверь синтаксис: `python3 -c "import yaml; yaml.safe_load(open('путь'))"` |
 
 ## Финальный чек-лист (отметь по мере выполнения)
 
 - [ ] Python venv создан, зависимости поставлены
-- [ ] Service account JSON в `~/.claude/secrets/sheets-sa.json` (chmod 600)
+- [ ] Service account JSON в `$DEAL_HUNTER_HOME/secrets/sheets-sa.json` (chmod 600)
 - [ ] Google Sheet создан, поделён с сервис-аккаунтом
 - [ ] `.env.deals` заполнен (TG_TOKEN, TG_CHAT_ID, SHEET_ID)
 - [ ] Telegram-бот отвечает на тестовое сообщение от `tg_notify.sh`

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import sys
 import time
@@ -27,7 +28,8 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
 ]
 
-SCREENSHOT_DIR = Path.home() / ".claude" / "logs" / "fetch_kz_screenshots"
+DEAL_HUNTER_HOME = Path(os.environ.get("DEAL_HUNTER_HOME", str(Path.home() / ".claude")))
+SCREENSHOT_DIR = DEAL_HUNTER_HOME / "logs" / "fetch_kz_screenshots"
 SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 

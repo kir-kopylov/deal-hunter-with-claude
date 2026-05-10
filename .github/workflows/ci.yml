@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DEAL_HUNTER_HOME: ${{ github.workspace }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install runtime + test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml pydantic jsonschema pytest freezegun structlog
+          pip install ruff yamllint
+
+      - name: Validate YAML configs (fail-fast)
+        run: |
+          python -c "import yaml; yaml.safe_load(open('data/schedule.yaml'))"
+          python -c "import yaml; yaml.safe_load(open('data/sheet_columns_ru.yaml'))"
+          python -c "import yaml; yaml.safe_load(open('data/landed_cost_table.yaml'))"
+
+      - name: yamllint
+        run: yamllint -c .yamllint.yaml data/ .github/ || true
+        # `|| true` пока — yamllint warnings не должны блокировать пока конфиг не finalised
+
+      - name: ruff format check
+        run: ruff format --check scripts/ tests/
+
+      - name: ruff lint
+        run: ruff check scripts/ tests/
+
+      - name: Unit tests
+        run: pytest -m unit ./tests/ -v
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y shellcheck
+          shellcheck scripts/*.sh || true
+        # `|| true` пока — много warnings про style, не критично, можно затянуть позже

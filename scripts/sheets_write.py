@@ -15,10 +15,10 @@
     python3 sheets_write.py --tab Pending_Help_Queue --read
 
 Особенности:
-- Английские ключи в input → русские заголовки в Sheet (через ~/.claude/data/sheet_columns_ru.yaml)
+- Английские ключи в input → русские заголовки в Sheet (через $DEAL_HUNTER_HOME/data/sheet_columns_ru.yaml)
 - При первой записи listing_url проставляет first_seen_at_almaty (immutable при последующих upsert)
 - Пересчитывает minutes_since_first_seen / hours_since_first_seen при каждом upsert
-- При недоступности Sheets API — записывает в ~/.claude/state/stash.jsonl, возвращает ненулевой exit
+- При недоступности Sheets API — записывает в $DEAL_HUNTER_HOME/state/stash.jsonl, возвращает ненулевой exit
 - Schema validation: будущая интеграция через jsonschema (placeholder)
 """
 from __future__ import annotations
@@ -34,8 +34,9 @@ from pathlib import Path
 import yaml
 
 HOME = Path.home()
-COLUMNS_YAML = HOME / ".claude" / "data" / "sheet_columns_ru.yaml"
-STASH_FILE = HOME / ".claude" / "state" / "stash.jsonl"
+DEAL_HUNTER_HOME = Path(os.environ.get("DEAL_HUNTER_HOME", str(HOME / ".claude")))
+COLUMNS_YAML = DEAL_HUNTER_HOME / "data" / "sheet_columns_ru.yaml"
+STASH_FILE = DEAL_HUNTER_HOME / "state" / "stash.jsonl"
 ALMATY_TZ = timezone(timedelta(hours=5))  # UTC+5 без DST
 
 
@@ -60,7 +61,7 @@ def get_worksheet(tab: str):
     import gspread
     from google.oauth2.service_account import Credentials
 
-    sa_path = os.environ.get("SHEETS_SA_JSON", str(HOME / ".claude" / "secrets" / "sheets-sa.json"))
+    sa_path = os.environ.get("SHEETS_SA_JSON", str(DEAL_HUNTER_HOME / "secrets" / "sheets-sa.json"))
     sheet_id = os.environ.get("SHEET_ID")
     if not sheet_id:
         raise RuntimeError("SHEET_ID env var not set (expected from .env.deals)")

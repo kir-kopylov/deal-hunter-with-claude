@@ -1,7 +1,7 @@
 timezone: Asia/Almaty
 
 # Edit this file to change schedule. After edit:
-#   python3 ~/.claude/scripts/generate_launchd.py
+#   python3 $DEAL_HUNTER_HOME/scripts/generate_launchd.py
 #   launchctl unload ~/Library/LaunchAgents/com.kkopylov.deals.*.plist
 #   launchctl load   ~/Library/LaunchAgents/com.kkopylov.deals.*.plist
 

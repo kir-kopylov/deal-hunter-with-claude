@@ -4,12 +4,13 @@
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
 import yaml
 
-DATA = Path.home() / ".claude" / "data"
+DATA = Path(os.environ.get("DEAL_HUNTER_HOME", str(Path.home() / ".claude"))) / "data"
 VALID_DAYS = {"sun", "mon", "tue", "wed", "thu", "fri", "sat", "*"}
 
 

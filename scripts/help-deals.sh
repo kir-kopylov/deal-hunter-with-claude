@@ -6,7 +6,7 @@
 #  pause for human at each anti-bot barrier, then continue to extract listings."
 #
 # Usage:
-#   bash ~/.claude/scripts/help-deals.sh
+#   bash $DEAL_HUNTER_HOME/scripts/help-deals.sh
 #
 # Requires:
 #   - Chrome extension "Claude in Chrome" installed and connected.
@@ -14,7 +14,9 @@
 
 set -uo pipefail
 
-ENV_FILE="$HOME/.claude/secrets/.env.deals"
+DEAL_HUNTER_HOME="${DEAL_HUNTER_HOME:-$HOME/.claude}"
+
+ENV_FILE="$DEAL_HUNTER_HOME/secrets/.env.deals"
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "ERROR: $ENV_FILE not found" >&2
   exit 65
@@ -45,15 +47,17 @@ if [[ "${ans,,}" != "y" ]]; then
   exit 0
 fi
 
-MASTER_PROMPT="$HOME/.claude/prompts/deal-hunter-master.md"
+export DEAL_HUNTER_HOME
+MASTER_PROMPT="$DEAL_HUNTER_HOME/prompts/deal-hunter-master.md"
 
 ASSISTED_PROMPT="SOURCE_GROUP=assisted
 RUN_ID=assisted-$(date +%Y%m%d-%H%M%S)
+DEAL_HUNTER_HOME=$DEAL_HUNTER_HOME
 
 Ты в ASSISTED MODE. Задача:
 
 1. Прочитай лист Pending_Help_Queue:
-   python3 ~/.claude/scripts/sheets_write.py --tab Pending_Help_Queue --read
+   python3 \$DEAL_HUNTER_HOME/scripts/sheets_write.py --tab Pending_Help_Queue --read
 
 2. Для каждой задачи со status=WAITING_FOR_HUMAN:
    a. Обнови её на status=IN_PROGRESS, assigned_at=now() через sheets_write.py upsert

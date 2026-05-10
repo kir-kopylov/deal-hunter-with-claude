@@ -1,0 +1,34 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["tests/fixtures", "tests/golden"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long — checked by formatter, не lint
+    "B008",  # function call in default arg
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]  # asserts ok in tests
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+markers = [
+    "unit: fast tests, no network, included in pre-commit",
+    "integration: tests that hit real Google Sheets API",
+    "expensive: tests that call Claude/Anthropic API (cost money)",
+]
