@@ -46,14 +46,16 @@ class TestFreshnessTimeMath:
             assert abs(hours_since(fsa, now) - 8.0) < 0.01
 
     def test_hours_since_zero_for_just_added(self):
-        with freeze_time("2026-05-09 12:00:00", tz_offset=5):
+        # freeze UTC at 12:00, Almaty (UTC+5) sees 17:00; listing was just seen
+        with freeze_time("2026-05-09 12:00:00"):
             now = datetime.now(ALMATY_TZ)
             assert hours_since("2026-05-09 17:00:00", now) == 0.0
 
     def test_hours_since_handles_year_rollover(self):
-        with freeze_time("2027-01-01 02:00:00", tz_offset=5):
+        # freeze UTC at 07:00 on Jan 1, Almaty sees 12:00; 14h before that = 22:00 Dec 31 Almaty
+        with freeze_time("2027-01-01 07:00:00"):
             now = datetime.now(ALMATY_TZ)
-            assert abs(hours_since("2026-12-31 21:00:00", now) - 14.0) < 0.01
+            assert abs(hours_since("2026-12-31 22:00:00", now) - 14.0) < 0.01
 
 
 class TestCadenceDayBoundary:
