@@ -1,0 +1,23 @@
+extends: default
+
+rules:
+  line-length:
+    max: 200
+    level: warning
+  document-start:
+    present: false
+  truthy:
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  # schedule.yaml uses inline objects { day: "*", hour: 9, minute: 0 } — relaxed
+  braces:
+    max-spaces-inside: -1
+  brackets:
+    max-spaces-inside: -1
+  commas:
+    max-spaces-after: -1
+
+ignore: |
+  .github/

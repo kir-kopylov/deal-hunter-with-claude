@@ -11,10 +11,12 @@ Output (stdout, JSON):
 Никогда не падает с exception — все ошибки маппятся в needs_human-ответ
 (агент превратит это в Pending_Help_Queue + TG алерт).
 """
+
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import sys
 import time
@@ -27,14 +29,20 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
 ]
 
-SCREENSHOT_DIR = Path.home() / ".claude" / "logs" / "fetch_kz_screenshots"
+DEAL_HUNTER_HOME = Path(os.environ.get("DEAL_HUNTER_HOME", str(Path.home() / ".claude")))
+SCREENSHOT_DIR = DEAL_HUNTER_HOME / "logs" / "fetch_kz_screenshots"
 SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def detect_block_reason(html: str, title: str, url: str) -> str | None:
     """Heuristics for detecting anti-bot blocks. Returns reason str or None if page looks ok."""
     lower = html.lower()
-    if "cf-challenge" in lower or "checking your browser" in lower or "cloudflare" in lower and "challenge" in lower:
+    if (
+        "cf-challenge" in lower
+        or "checking your browser" in lower
+        or "cloudflare" in lower
+        and "challenge" in lower
+    ):
         return "cf_challenge"
     if "captcha" in lower or "вы не робот" in lower or "i'm not a robot" in lower:
         return "captcha"
@@ -100,9 +108,12 @@ PARSERS = {
 
 def fetch_with_playwright(url: str, source: str | None, timeout_s: int) -> dict:
     """Main fetch function. Catches all exceptions, returns dict with status."""
-    from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+    from playwright.sync_api import TimeoutError as PWTimeout
+    from playwright.sync_api import sync_playwright
+
     try:
         from playwright_stealth import stealth_sync
+
         has_stealth = True
     except ImportError:
         has_stealth = False

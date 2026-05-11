@@ -1,9 +1,11 @@
 #!/bin/bash
 # Approve a parser fixture: copy <fixture>.received.json to <fixture>.approved.json
 #
-# Usage:  bash ~/.claude/scripts/approve.sh olx_kz/normal_listing
+# Usage:  bash $DEAL_HUNTER_HOME/scripts/approve.sh olx_kz/normal_listing
 #
 set -euo pipefail
+
+DEAL_HUNTER_HOME="${DEAL_HUNTER_HOME:-$HOME/.claude}"
 
 FIXTURE="${1:-}"
 if [[ -z "$FIXTURE" ]]; then
@@ -12,7 +14,7 @@ if [[ -z "$FIXTURE" ]]; then
   exit 64
 fi
 
-DIR="$HOME/.claude/tests/fixtures/$FIXTURE"
+DIR="$DEAL_HUNTER_HOME/tests/fixtures/$FIXTURE"
 RECEIVED="${DIR}.received.json"
 APPROVED="${DIR}.approved.json"
 

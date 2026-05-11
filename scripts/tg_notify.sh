@@ -3,10 +3,12 @@
 #   tg_notify.sh <CATEGORY> "<message>"
 # Categories: HOT_DEAL | HELP_NEEDED | RUN_SUMMARY | STALE_QUEUE | YIELD_DROP | DIST_SHIFT
 #
-# Reads TG_TOKEN, TG_CHAT_ID, TG_SUMMARY from $HOME/.claude/secrets/.env.deals.
-# Logs failures to $HOME/.claude/logs/tg_failed.log instead of failing the caller.
+# Reads TG_TOKEN, TG_CHAT_ID, TG_SUMMARY from $DEAL_HUNTER_HOME/secrets/.env.deals.
+# Logs failures to $DEAL_HUNTER_HOME/logs/tg_failed.log instead of failing the caller.
 
 set -u
+
+DEAL_HUNTER_HOME="${DEAL_HUNTER_HOME:-$HOME/.claude}"
 
 CATEGORY="${1:-}"
 MESSAGE="${2:-}"
@@ -16,7 +18,7 @@ if [[ -z "$CATEGORY" || -z "$MESSAGE" ]]; then
   exit 64
 fi
 
-ENV_FILE="$HOME/.claude/secrets/.env.deals"
+ENV_FILE="$DEAL_HUNTER_HOME/secrets/.env.deals"
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "ERROR: $ENV_FILE not found. Copy from .env.deals.template and fill in." >&2
   exit 65
@@ -25,7 +27,7 @@ fi
 # shellcheck disable=SC1090
 set -a; . "$ENV_FILE"; set +a
 
-LOG_FAIL="$HOME/.claude/logs/tg_failed.log"
+LOG_FAIL="$DEAL_HUNTER_HOME/logs/tg_failed.log"
 mkdir -p "$(dirname "$LOG_FAIL")"
 
 # Suppress RUN_SUMMARY if user opted out

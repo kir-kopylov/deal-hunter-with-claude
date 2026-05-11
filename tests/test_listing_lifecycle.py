@@ -4,9 +4,10 @@
 никогда не меняется при последующих upsert'ах. minutes/hours_since_first_seen —
 динамические, пересчитываются при каждом обращении.
 """
+
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -17,7 +18,8 @@ ALMATY_TZ = timezone(timedelta(hours=5))
 
 # Import the recompute helper from sheets_write.py
 try:
-    from sheets_write import _recompute_freshness, ALMATY_TZ as SW_TZ
+    from sheets_write import ALMATY_TZ as SW_TZ
+    from sheets_write import _recompute_freshness
 except ImportError:
     pytest.skip("sheets_write.py not importable", allow_module_level=True)
 
@@ -63,8 +65,10 @@ class TestImmutabilityContract:
         # This test exists to remind future devs: in cmd_upsert(), the existing
         # first_seen_at_almaty value is preserved from the sheet, not overwritten.
         # See sheets_write.py::cmd_upsert "preserved" branch.
-        from sheets_write import cmd_upsert
         import inspect
+
+        from sheets_write import cmd_upsert
+
         src = inspect.getsource(cmd_upsert)
         assert "first_seen_at_almaty" in src
         assert "preserved" in src or "existing_dict" in src

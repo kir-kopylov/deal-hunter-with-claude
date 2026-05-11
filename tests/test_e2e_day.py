@@ -7,6 +7,7 @@ first_seen_at_almaty preservation.
 NB: это пока скелет — реальная in-memory Sheet требует мокинга gspread.
 TODO: добавить gspread-mock или unittest.mock для cmd_append/cmd_upsert.
 """
+
 from __future__ import annotations
 
 import pytest

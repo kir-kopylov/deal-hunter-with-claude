@@ -15,27 +15,28 @@
     python3 sheets_write.py --tab Pending_Help_Queue --read
 
 Особенности:
-- Английские ключи в input → русские заголовки в Sheet (через ~/.claude/data/sheet_columns_ru.yaml)
+- Английские ключи в input → русские заголовки в Sheet (через $DEAL_HUNTER_HOME/data/sheet_columns_ru.yaml)
 - При первой записи listing_url проставляет first_seen_at_almaty (immutable при последующих upsert)
 - Пересчитывает minutes_since_first_seen / hours_since_first_seen при каждом upsert
-- При недоступности Sheets API — записывает в ~/.claude/state/stash.jsonl, возвращает ненулевой exit
+- При недоступности Sheets API — записывает в $DEAL_HUNTER_HOME/state/stash.jsonl, возвращает ненулевой exit
 - Schema validation: будущая интеграция через jsonschema (placeholder)
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import os
 import sys
-import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
 
 HOME = Path.home()
-COLUMNS_YAML = HOME / ".claude" / "data" / "sheet_columns_ru.yaml"
-STASH_FILE = HOME / ".claude" / "state" / "stash.jsonl"
+DEAL_HUNTER_HOME = Path(os.environ.get("DEAL_HUNTER_HOME", str(HOME / ".claude")))
+COLUMNS_YAML = DEAL_HUNTER_HOME / "data" / "sheet_columns_ru.yaml"
+STASH_FILE = DEAL_HUNTER_HOME / "state" / "stash.jsonl"
 ALMATY_TZ = timezone(timedelta(hours=5))  # UTC+5 без DST
 
 
@@ -60,7 +61,7 @@ def get_worksheet(tab: str):
     import gspread
     from google.oauth2.service_account import Credentials
 
-    sa_path = os.environ.get("SHEETS_SA_JSON", str(HOME / ".claude" / "secrets" / "sheets-sa.json"))
+    sa_path = os.environ.get("SHEETS_SA_JSON", str(DEAL_HUNTER_HOME / "secrets" / "sheets-sa.json"))
     sheet_id = os.environ.get("SHEET_ID")
     if not sheet_id:
         raise RuntimeError("SHEET_ID env var not set (expected from .env.deals)")
@@ -82,13 +83,19 @@ def stash_rows(tab: str, mode: str, rows: list[dict], reason: str) -> None:
     STASH_FILE.parent.mkdir(parents=True, exist_ok=True)
     with STASH_FILE.open("a") as f:
         for row in rows:
-            f.write(json.dumps({
-                "tab": tab,
-                "mode": mode,
-                "row": row,
-                "reason": reason,
-                "stashed_at_almaty": now_almaty_iso(),
-            }, ensure_ascii=False) + "\n")
+            f.write(
+                json.dumps(
+                    {
+                        "tab": tab,
+                        "mode": mode,
+                        "row": row,
+                        "reason": reason,
+                        "stashed_at_almaty": now_almaty_iso(),
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
 
 
 def english_to_russian_row(row_en: dict, mapping: dict[str, str], headers: list[str]) -> list:
@@ -172,7 +179,7 @@ def cmd_upsert(ws, mapping: dict[str, str], rows: list[dict], key: str) -> dict:
         else:
             # Existing — preserve first_seen_at_almaty from sheet
             existing_values = ws.row_values(existing_row_num)
-            existing_dict = dict(zip(headers, existing_values))
+            existing_dict = dict(zip(headers, existing_values, strict=False))
             preserved = {}
             if "first_seen_at_almaty" in mapping:
                 fsa_ru = mapping["first_seen_at_almaty"]
@@ -288,12 +295,18 @@ def main() -> int:
         return 0
     except Exception as e:
         stash_rows(args.tab, args.mode, rows, str(e))
-        print(json.dumps({
-            "ok": False,
-            "error": str(e),
-            "stashed_count": len(rows),
-            "stash_file": str(STASH_FILE),
-        }, ensure_ascii=False), file=sys.stderr)
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": str(e),
+                    "stashed_count": len(rows),
+                    "stash_file": str(STASH_FILE),
+                },
+                ensure_ascii=False,
+            ),
+            file=sys.stderr,
+        )
         return 2
 
 
