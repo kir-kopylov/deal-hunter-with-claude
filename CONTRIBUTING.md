@@ -7,8 +7,7 @@ git clone https://github.com/kir-kopylov/deal-hunter-with-claude.git
 cd deal-hunter-with-claude
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements-dev.txt  # TODO: создать
-pip install pre-commit
+pip install -r requirements-dev.txt
 pre-commit install
 ```
 

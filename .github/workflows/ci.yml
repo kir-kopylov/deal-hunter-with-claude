@@ -25,9 +25,7 @@ jobs:
       - name: Install runtime + test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml pydantic jsonschema pytest pytest-cov freezegun structlog
-          pip install beautifulsoup4
-          pip install ruff yamllint
+          pip install -r requirements-dev.txt
 
       - name: Validate YAML configs (fail-fast)
         run: |

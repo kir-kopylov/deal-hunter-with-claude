@@ -85,9 +85,6 @@ PARSERS = {
 
 def fetch_with_playwright(url: str, source: str | None, timeout_s: int) -> dict:
     """Main fetch function. Catches all exceptions, returns dict with status."""
-    from playwright.sync_api import TimeoutError as PWTimeout
-    from playwright.sync_api import sync_playwright
-
     try:
         from playwright_stealth import stealth_sync
 
@@ -99,6 +96,11 @@ def fetch_with_playwright(url: str, source: str | None, timeout_s: int) -> dict:
     screenshot_path = SCREENSHOT_DIR / f"{source or 'unknown'}_{ts}.png"
 
     try:
+        # Импорт внутри try: отсутствие playwright/bs4 не должно ронять процесс —
+        # контракт «никогда не падает», ошибка маппится в needs_human ниже.
+        from playwright.sync_api import TimeoutError as PWTimeout
+        from playwright.sync_api import sync_playwright
+
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
@@ -184,9 +186,12 @@ def fetch_with_playwright(url: str, source: str | None, timeout_s: int) -> dict:
             }
 
     except ImportError as e:
+        # Не хватать может playwright ИЛИ bs4 (через parsers.parse_*). Сообщаем
+        # точное имя отсутствующего модуля, чтобы reason не вводил в заблуждение.
+        missing = getattr(e, "name", None) or "unknown"
         return {
             "status": "needs_human",
-            "reason": "playwright_not_installed",
+            "reason": f"dependency_missing: {missing}",
             "url": url,
             "error": str(e),
         }
