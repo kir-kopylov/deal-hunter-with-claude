@@ -48,7 +48,7 @@ python3 -m venv $DEAL_HUNTER_HOME/venv
 source $DEAL_HUNTER_HOME/venv/bin/activate
 pip install --upgrade pip
 pip install playwright playwright-stealth gspread google-auth pyyaml \
-            pydantic jsonschema pytest freezegun structlog approvaltests
+            beautifulsoup4 pydantic jsonschema pytest freezegun structlog approvaltests
 playwright install chromium
 ```
 
