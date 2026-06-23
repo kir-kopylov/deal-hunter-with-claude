@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -34,6 +35,32 @@ DAY_NAME_TO_NUM = {
     "fri": 5,
     "sat": 6,
 }
+
+# Python datetime.weekday(): понедельник=0 .. воскресенье=6 → имя дня в schedule.yaml.
+# Это отдельная нумерация от DAY_NAME_TO_NUM (там конвенция launchd), поэтому держим
+# явный маппинг, а не вычисляем один из другого.
+PY_WEEKDAY_TO_DAY_NAME = {
+    0: "mon",
+    1: "tue",
+    2: "wed",
+    3: "thu",
+    4: "fri",
+    5: "sat",
+    6: "sun",
+}
+
+
+def schedule_fires_on(entry: dict, dt: datetime) -> bool:
+    """Сработает ли запись расписания в дату dt (по дню недели, без учёта часа/минуты).
+
+    Используется как для тестов cadence, так и как переносимая ссылка на логику,
+    которую launchd реализует через StartCalendarInterval.
+    """
+    days = entry["day"]
+    if days == "*":
+        return True
+    day_list = days if isinstance(days, list) else [days]
+    return PY_WEEKDAY_TO_DAY_NAME[dt.weekday()] in day_list
 
 
 def calendar_intervals_for_group(schedules: list[dict]) -> list[dict]:

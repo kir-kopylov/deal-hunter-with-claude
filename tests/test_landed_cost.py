@@ -1,88 +1,22 @@
 """Tier 1.6 — Landed cost calculator tests.
 
 Тесты на расчёт landed cost для международных refurb-предложений.
-NB: реальный калькулятор пока не выделен в модуль — здесь тесты задают КОНТРАКТ
-формулы. Когда landed_cost_calc.py появится, импортируется отсюда.
+calc_landed_cost импортируется из scripts/landed_cost_calc.py — это единственный
+источник правды формулы (раньше здесь жила её копия, что давало ложную
+уверенность: тест проверял копию, а не рабочий код).
 """
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
-
 import pytest
-import yaml
-
-DATA = Path(os.environ.get("DEAL_HUNTER_HOME", str(Path.home() / ".claude"))) / "data"
+from landed_cost_calc import calc_landed_cost, load_landed_cost_table
 
 pytestmark = pytest.mark.unit
 
 
-def calc_landed_cost(
-    item_price: float,
-    item_currency: str,
-    source: str,
-    screen_size: str,
-    cfg: dict,
-) -> dict:
-    """Reference implementation of landed cost calculation. Mirror in landed_cost_calc.py."""
-    fx = cfg["fx_rates_to_kzt"]
-    customs = cfg["customs_kz"]
-    forwarders = cfg["forwarders"]
-    fwd_name = cfg["default_forwarder_by_source"][source]
-    fwd = forwarders[fwd_name]
-    overhead = cfg["overhead_percent"] / 100.0
-    risk = cfg["risk_premium_percent"] / 100.0
-
-    # Forwarder shipping
-    if "per_lb_usd" in fwd:
-        weight = (
-            fwd["estimated_weight_lb_macbook_14"]
-            if "14" in screen_size
-            else fwd["estimated_weight_lb_macbook_16"]
-        )
-        shipping_usd = fwd["base_fee_usd"] + weight * fwd["per_lb_usd"]
-    elif "per_kg_gbp" in fwd:
-        weight = (
-            fwd["estimated_weight_kg_macbook_14"]
-            if "14" in screen_size
-            else fwd["estimated_weight_kg_macbook_16"]
-        )
-        shipping_gbp = fwd["base_fee_gbp"] + weight * fwd["per_kg_gbp"]
-        shipping_usd = shipping_gbp * fx["GBP"] / fx["USD"]
-    else:
-        shipping_usd = 0
-
-    # Customs (declared value = item only)
-    item_eur = item_price * fx[item_currency] / fx["EUR"]
-    if item_eur > customs["duty_free_limit_eur"]:
-        excess = item_eur - customs["duty_free_limit_eur"]
-        duty_eur = excess * customs["duty_rate_percent"] / 100.0
-        vat_eur = excess * customs["vat_rate_percent"] / 100.0
-        customs_kzt = (duty_eur + vat_eur) * fx["EUR"]
-    else:
-        customs_kzt = 0
-
-    item_kzt = item_price * fx[item_currency]
-    shipping_kzt = shipping_usd * fx["USD"]
-    overhead_kzt = item_kzt * overhead
-    risk_kzt = item_kzt * risk
-
-    total_kzt = item_kzt + shipping_kzt + customs_kzt + overhead_kzt + risk_kzt
-    return {
-        "item_kzt": round(item_kzt),
-        "shipping_kzt": round(shipping_kzt),
-        "customs_kzt": round(customs_kzt),
-        "overhead_kzt": round(overhead_kzt),
-        "risk_kzt": round(risk_kzt),
-        "total_kzt": round(total_kzt),
-    }
-
-
 @pytest.fixture
 def cfg():
-    with (DATA / "landed_cost_table.yaml").open() as f:
-        return yaml.safe_load(f)
+    return load_landed_cost_table()
 
 
 class TestLandedCost:

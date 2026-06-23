@@ -58,46 +58,23 @@ def detect_block_reason(html: str, title: str, url: str) -> str | None:
 
 
 def parse_olx_listings(page) -> list[dict]:
-    """Extract listing cards from olx.kz search results.
-    NOTE: this is a placeholder selector — DOM may need adjustment after first real run.
-    Approval-style fixture tests should pin this down."""
-    return page.evaluate("""
-        () => {
-            const cards = document.querySelectorAll('[data-cy="l-card"], div.css-1apmciz, div.css-19ucd76');
-            return Array.from(cards).map(c => {
-                const linkEl = c.querySelector('a');
-                const titleEl = c.querySelector('h6, h4, [data-cy="ad-card-title"]');
-                const priceEl = c.querySelector('[data-testid="ad-price"], p[data-testid="ad-price"]');
-                const locEl = c.querySelector('[data-testid="location-date"]');
-                return {
-                    url: linkEl ? new URL(linkEl.getAttribute('href'), location.origin).href : null,
-                    title: titleEl ? titleEl.textContent.trim() : null,
-                    price_text: priceEl ? priceEl.textContent.trim() : null,
-                    location_date_text: locEl ? locEl.textContent.trim() : null,
-                };
-            }).filter(x => x.url);
-        }
-    """)
+    """Извлечь карточки olx.kz из уже отрендеренного DOM.
+
+    Делегирует чистой функции parsers.parse_olx_html (тестируется без браузера
+    через approval-фикстуры). page.content() возвращает сериализованный текущий
+    DOM, т.е. то же, что видел бы querySelectorAll."""
+    from parsers import parse_olx_html
+
+    return parse_olx_html(page.content(), page.url)
 
 
 def parse_kaspi_listings(page) -> list[dict]:
-    """Extract listing cards from kaspi.kz search results.
-    NOTE: placeholder — needs fixture-based refinement."""
-    return page.evaluate("""
-        () => {
-            const cards = document.querySelectorAll('div.item-card, div[data-card]');
-            return Array.from(cards).map(c => {
-                const linkEl = c.querySelector('a.item-card__name-link, a[href*="/p/"]');
-                const titleEl = c.querySelector('.item-card__name, [data-card-name]');
-                const priceEl = c.querySelector('.item-card__prices-price, [data-card-price]');
-                return {
-                    url: linkEl ? new URL(linkEl.getAttribute('href'), location.origin).href : null,
-                    title: titleEl ? titleEl.textContent.trim() : null,
-                    price_text: priceEl ? priceEl.textContent.trim() : null,
-                };
-            }).filter(x => x.url);
-        }
-    """)
+    """Извлечь карточки kaspi.kz из уже отрендеренного DOM.
+
+    Делегирует parsers.parse_kaspi_html (см. parse_olx_listings)."""
+    from parsers import parse_kaspi_html
+
+    return parse_kaspi_html(page.content(), page.url)
 
 
 PARSERS = {

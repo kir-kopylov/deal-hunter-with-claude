@@ -28,20 +28,21 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 
 import yaml
+
+# Время и расчёт свежести вынесены в timeutil — единый источник правды.
+# Реэкспортируем ALMATY_TZ / now_almaty_iso для обратной совместимости импортов.
+from timeutil import ALMATY_TZ, hours_since, minutes_since, now_almaty_iso
 
 HOME = Path.home()
 DEAL_HUNTER_HOME = Path(os.environ.get("DEAL_HUNTER_HOME", str(HOME / ".claude")))
 COLUMNS_YAML = DEAL_HUNTER_HOME / "data" / "sheet_columns_ru.yaml"
 STASH_FILE = DEAL_HUNTER_HOME / "state" / "stash.jsonl"
-ALMATY_TZ = timezone(timedelta(hours=5))  # UTC+5 без DST
 
-
-def now_almaty_iso() -> str:
-    return datetime.now(ALMATY_TZ).strftime("%Y-%m-%d %H:%M:%S")
+__all__ = ["ALMATY_TZ", "now_almaty_iso"]
 
 
 def load_column_mapping(tab: str) -> dict[str, str]:
@@ -204,11 +205,9 @@ def _recompute_freshness(row: dict) -> dict:
     if not fsa:
         return row
     try:
-        fsa_dt = datetime.strptime(fsa, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ALMATY_TZ)
         now = datetime.now(ALMATY_TZ)
-        delta = now - fsa_dt
-        row["minutes_since_first_seen"] = int(delta.total_seconds() // 60)
-        row["hours_since_first_seen"] = round(delta.total_seconds() / 3600, 2)
+        row["minutes_since_first_seen"] = minutes_since(fsa, now)
+        row["hours_since_first_seen"] = round(hours_since(fsa, now), 2)
     except (ValueError, TypeError):
         pass
     return row

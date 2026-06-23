@@ -1,0 +1,15 @@
+{
+  "listings": [
+    {
+      "price_text": "499 990 ₸",
+      "title": "Apple MacBook Air 13 M2",
+      "url": "https://kaspi.kz/shop/p/apple-macbook-air-13-m2-123/"
+    },
+    {
+      "price_text": "1 299 990 ₸",
+      "title": "Apple MacBook Pro 16 M3 Max",
+      "url": "https://kaspi.kz/shop/p/apple-macbook-pro-16-m3-max-456/"
+    }
+  ],
+  "source": "kaspi_objavleniya"
+}
