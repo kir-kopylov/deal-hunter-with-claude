@@ -24,8 +24,10 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 65
 fi
 
-# shellcheck disable=SC1090
-set -a; . "$ENV_FILE"; set +a
+set -a
+# shellcheck source=/dev/null
+. "$ENV_FILE"
+set +a
 
 LOG_FAIL="$DEAL_HUNTER_HOME/logs/tg_failed.log"
 mkdir -p "$(dirname "$LOG_FAIL")"

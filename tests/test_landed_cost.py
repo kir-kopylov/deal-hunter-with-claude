@@ -8,6 +8,10 @@ calc_landed_cost импортируется из scripts/landed_cost_calc.py —
 
 from __future__ import annotations
 
+import json
+import sys
+
+import landed_cost_calc
 import pytest
 from landed_cost_calc import calc_landed_cost, load_landed_cost_table
 
@@ -17,6 +21,36 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def cfg():
     return load_landed_cost_table()
+
+
+class TestCli:
+    def test_main_prints_breakdown(self, monkeypatch, capsys):
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "landed_cost_calc.py",
+                "--price",
+                "1899",
+                "--currency",
+                "USD",
+                "--source",
+                "apple_refurb_us",
+                "--screen",
+                "14",
+            ],
+        )
+        assert landed_cost_calc.main() == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["total_kzt"] > out["item_kzt"] > 0
+        assert set(out) == {
+            "item_kzt",
+            "shipping_kzt",
+            "customs_kzt",
+            "overhead_kzt",
+            "risk_kzt",
+            "total_kzt",
+        }
 
 
 class TestLandedCost:

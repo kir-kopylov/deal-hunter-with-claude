@@ -27,8 +27,23 @@ indent-style = "space"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+# По умолчанию исключаем expensive (вызовы Claude API) — обычный `pytest` зелёный
+# без сети и без денег. CI/локально для платного слоя: `pytest -m expensive`.
+addopts = "-ra --strict-markers -m 'not expensive'"
 markers = [
     "unit: fast tests, no network, included in pre-commit",
     "integration: tests that hit real Google Sheets API",
     "expensive: tests that call Claude/Anthropic API (cost money)",
+]
+
+[tool.coverage.run]
+source = ["scripts"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
 ]

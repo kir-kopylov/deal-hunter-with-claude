@@ -25,7 +25,8 @@ jobs:
       - name: Install runtime + test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml pydantic jsonschema pytest freezegun structlog
+          pip install pyyaml pydantic jsonschema pytest pytest-cov freezegun structlog
+          pip install beautifulsoup4
           pip install ruff yamllint
 
       - name: Validate YAML configs (fail-fast)
@@ -44,8 +45,9 @@ jobs:
       - name: ruff lint
         run: ruff check scripts/ tests/
 
-      - name: Unit tests
-        run: pytest -m unit ./tests/ -v
+      - name: Unit tests + coverage gate
+        run: pytest -m unit ./tests/ -v --cov=scripts --cov-report=term-missing
+        # Порог покрытия (fail_under) задан в pyproject.toml [tool.coverage.report].
 
   shellcheck:
     runs-on: ubuntu-latest
@@ -56,5 +58,4 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y shellcheck
-          shellcheck scripts/*.sh || true
-        # `|| true` пока — много warnings про style, не критично, можно затянуть позже
+          shellcheck scripts/*.sh

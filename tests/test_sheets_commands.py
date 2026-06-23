@@ -182,6 +182,21 @@ class TestCmdUpsert:
         with pytest.raises(ValueError, match="not in column mapping"):
             cmd_upsert(ws, deals_mapping, [{"listing_url": "u1"}], key="nonexistent_key")
 
+    def test_existing_row_without_first_seen_gets_now(self, make_ws, deals_mapping):
+        # Строка добавлена через append (first_seen не проставлен). Последующий
+        # upsert должен ЗАПОЛНИТЬ first_seen текущим временем (else-ветка preserve).
+        ws = make_ws()
+        cmd_append(ws, deals_mapping, [{"listing_url": "u1", "price_kzt": 100}])
+        assert cmd_read(ws, deals_mapping)[0]["first_seen_at_almaty"] in ("", None)
+
+        result = cmd_upsert(
+            ws, deals_mapping, [{"listing_url": "u1", "price_kzt": 200}], "listing_url"
+        )
+        assert result == {"inserted": 0, "updated": 1}
+        rows = cmd_read(ws, deals_mapping)
+        assert len(rows) == 1
+        assert rows[0]["first_seen_at_almaty"]  # теперь проставлено
+
 
 class TestCmdMarkUnavailable:
     def test_marks_only_targeted_rows(self, make_ws, deals_mapping):

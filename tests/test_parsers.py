@@ -103,6 +103,10 @@ class TestParserEdgeCases:
         html = '<div data-cy="l-card"><h6>Без ссылки</h6></div>'
         assert parse_html("olx_kz", html) == []
 
+    def test_kaspi_card_without_link_is_dropped(self):
+        html = "<div data-card><div data-card-name>Без ссылки</div></div>"
+        assert parse_html("kaspi_objavleniya", html) == []
+
     def test_olx_relative_href_absolutized_against_origin(self):
         # location.origin-семантика: путь base_url игнорируется, берётся scheme+host.
         html = '<div data-cy="l-card"><a href="/d/x-1.html">t</a></div>'

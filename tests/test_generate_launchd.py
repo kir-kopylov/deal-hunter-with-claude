@@ -8,6 +8,7 @@ calendar_intervals_for_group — чистая функция, превращаю
 
 from __future__ import annotations
 
+import generate_launchd as gl
 import pytest
 from generate_launchd import (
     DAY_NAME_TO_NUM,
@@ -102,3 +103,33 @@ class TestRenderPlist:
         xml = render_plist("a & b", "A1", [{"Hour": 8, "Minute": 0}])
         assert "<string>a &amp; b</string>" in xml
         assert "a & b</string>" not in xml
+
+
+class TestMain:
+    def test_main_writes_plist_per_group(self, monkeypatch, tmp_path):
+        sched = tmp_path / "schedule.yaml"
+        sched.write_text(
+            "groups:\n"
+            "  A1:\n"
+            "    schedule:\n"
+            "      - {day: '*', hour: 9, minute: 0}\n"
+            "  A3:\n"
+            "    schedule:\n"
+            "      - {day: ['mon', 'wed'], hour: 11, minute: 30}\n"
+        )
+        monkeypatch.setattr(gl, "SCHEDULE_YAML", sched)
+        monkeypatch.setattr(gl, "LAUNCH_AGENTS", tmp_path / "agents")
+        monkeypatch.setattr(gl, "LOG_DIR", tmp_path / "logs")
+
+        assert gl.main() == 0
+        a1 = tmp_path / "agents" / "com.kkopylov.deals.A1.plist"
+        a3 = tmp_path / "agents" / "com.kkopylov.deals.A3.plist"
+        assert a1.exists() and a3.exists()
+        assert "<string>A1</string>" in a1.read_text()
+        # A3 — два дня → два StartCalendarInterval-словаря.
+        assert a3.read_text().count("<key>Weekday</key>") == 2
+
+    def test_main_missing_schedule_returns_1(self, monkeypatch, tmp_path, capsys):
+        monkeypatch.setattr(gl, "SCHEDULE_YAML", tmp_path / "nope.yaml")
+        assert gl.main() == 1
+        assert "not found" in capsys.readouterr().err
