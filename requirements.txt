@@ -1,0 +1,13 @@
+# Runtime-зависимости deal hunter.
+# Единый источник правды: и установка по инструкции (data/README.md), и CI
+# тянут зависимости отсюда, чтобы окружения не расходились.
+# После установки для браузерного фетча также нужен: playwright install chromium
+beautifulsoup4
+playwright
+playwright-stealth
+gspread
+google-auth
+pyyaml
+pydantic
+jsonschema
+structlog

@@ -1,0 +1,11 @@
+# Dev/CI-зависимости: рантайм + инструменты тестирования и линтинга.
+# CI (.github/workflows/ci.yml) и локальная разработка (CONTRIBUTING.md) ставят
+# именно этот файл, поэтому CI ставит ровно то же, что и реальное окружение.
+-r requirements.txt
+pytest
+pytest-cov
+freezegun
+approvaltests
+ruff
+yamllint
+pre-commit

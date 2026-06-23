@@ -6,8 +6,10 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
-from fetch_kz import parse_kaspi_listings, parse_olx_listings
+from fetch_kz import fetch_with_playwright, parse_kaspi_listings, parse_olx_listings
 
 pytestmark = pytest.mark.unit
 
@@ -42,3 +44,15 @@ def test_parse_kaspi_listings_delegates_to_pure_parser():
     assert len(out) == 1
     assert out[0]["url"] == "https://kaspi.kz/shop/p/item-1/"
     assert out[0]["price_text"] == "10 ₸"
+
+
+def test_missing_dependency_reports_module_name(monkeypatch):
+    # Делаем playwright неимпортируемым → fetch не должен падать, а вернуть
+    # needs_human с ТОЧНЫМ именем модуля (а не общим 'playwright_not_installed').
+    monkeypatch.setitem(sys.modules, "playwright", None)
+    result = fetch_with_playwright("https://olx.kz/list/q-macbook", "olx_kz", timeout_s=5)
+    assert result["status"] == "needs_human"
+    # reason называет отсутствующий модуль (playwright[.sync_api]), не общий ярлык.
+    assert result["reason"].startswith("dependency_missing:")
+    assert "playwright" in result["reason"]
+    assert result["url"] == "https://olx.kz/list/q-macbook"
