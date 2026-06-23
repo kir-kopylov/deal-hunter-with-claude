@@ -7,9 +7,9 @@
     pytest tests/test_parsers.py                     # обычный прогон
     bash scripts/approve.sh olx_kz/normal            # одобрить изменение фикстуры
 
-NB: реальные парсеры сейчас в fetch_kz.py и используют live browser. Чтобы тесты
-работали без браузера, нужно вынести логику парсинга DOM в отдельные функции,
-которые принимают HTML строкой. Это TODO; пока тесты — каркас.
+Парсеры — чистые функции parsers.parse_html (BeautifulSoup, без браузера); те же
+функции использует fetch_kz.py в проде, поэтому approval-фикстуры пиннят реальную
+логику разбора DOM, а не каркас.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 
 import pytest
+from parsers import parse_html
 
 pytestmark = pytest.mark.unit
 
@@ -42,10 +43,8 @@ def _list_fixtures() -> list[tuple[str, Path]]:
 
 
 def parse_html_to_listings(source: str, html: str) -> dict:
-    """Pure-function HTML→listings parser. TODO: extract from fetch_kz.py.
-    Currently a stub that returns empty for any input."""
-    # When implemented, this will use BeautifulSoup or similar (no real browser).
-    return {"source": source, "listings": [], "_stub": True}
+    """HTML→listings через рабочий парсер parsers.parse_html (без браузера)."""
+    return {"source": source, "listings": parse_html(source, html)}
 
 
 @pytest.mark.parametrize(
@@ -90,3 +89,43 @@ def test_at_least_one_fixture_per_critical_source():
             f"Save real HTML to $DEAL_HUNTER_HOME/tests/fixtures/<source>/<scenario>.html "
             f"and run pytest again to bootstrap approved.json."
         )
+
+
+class TestParserEdgeCases:
+    def test_empty_html_returns_empty(self):
+        assert parse_html("olx_kz", "<html></html>") == []
+        assert parse_html("kaspi_objavleniya", "") == []
+
+    def test_unknown_source_returns_empty(self):
+        assert parse_html("totally_unknown", "<div data-cy='l-card'><a href='/x'></a></div>") == []
+
+    def test_olx_card_without_link_is_dropped(self):
+        html = '<div data-cy="l-card"><h6>Без ссылки</h6></div>'
+        assert parse_html("olx_kz", html) == []
+
+    def test_kaspi_card_without_link_is_dropped(self):
+        html = "<div data-card><div data-card-name>Без ссылки</div></div>"
+        assert parse_html("kaspi_objavleniya", html) == []
+
+    def test_olx_relative_href_absolutized_against_origin(self):
+        # location.origin-семантика: путь base_url игнорируется, берётся scheme+host.
+        html = '<div data-cy="l-card"><a href="/d/x-1.html">t</a></div>'
+        out = parse_html("olx_kz", html, base_url="https://www.olx.kz/list/q-macbook")
+        assert out[0]["url"] == "https://www.olx.kz/d/x-1.html"
+
+    def test_kaspi_matches_via_data_card_attributes(self):
+        html = (
+            '<div data-card><a href="/shop/p/item-1/">x</a>'
+            "<div data-card-name>Имя</div><span data-card-price>10 ₸</span></div>"
+        )
+        out = parse_html("kaspi_objavleniya", html)
+        assert len(out) == 1
+        assert out[0]["title"] == "Имя"
+        assert out[0]["price_text"] == "10 ₸"
+        assert out[0]["url"].endswith("/shop/p/item-1/")
+
+    def test_missing_price_yields_none_not_crash(self):
+        html = '<div data-cy="l-card"><a href="/d/x-1.html">t</a><h6>Title</h6></div>'
+        out = parse_html("olx_kz", html)
+        assert out[0]["price_text"] is None
+        assert out[0]["title"] == "Title"

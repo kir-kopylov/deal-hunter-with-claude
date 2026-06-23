@@ -4,13 +4,18 @@ Edge cases для system, который сильно зависит от вре
 - hours_since_first_seen в полночь Almaty
 - cadence «mon/wed/fri» в воскресенье 23:59 vs понедельник 00:01
 - stale-queue alert ровно через 24ч
+
+Время-функции импортируются из рабочего кода (timeutil, generate_launchd),
+а не переписываются здесь — иначе тест проверял бы собственную копию.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import pytest
+from generate_launchd import schedule_fires_on
+from timeutil import ALMATY_TZ, hours_since
 
 try:
     from freezegun import freeze_time
@@ -21,20 +26,6 @@ pytestmark = [
     pytest.mark.unit,
     pytest.mark.skipif(freeze_time is None, reason="freezegun not installed"),
 ]
-
-
-ALMATY_TZ = timezone(timedelta(hours=5))
-
-
-def hours_since(first_seen_iso: str, now: datetime) -> float:
-    fsa = datetime.strptime(first_seen_iso, "%Y-%m-%d %H:%M:%S").replace(tzinfo=ALMATY_TZ)
-    return (now - fsa).total_seconds() / 3600
-
-
-def is_run_day(day_name: str, now: datetime) -> bool:
-    """Mirror generate_launchd day-name logic."""
-    weekday_map = {"sun": 6, "mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5}
-    return now.weekday() == weekday_map[day_name]
 
 
 class TestFreshnessTimeMath:
@@ -59,17 +50,38 @@ class TestFreshnessTimeMath:
 
 
 class TestCadenceDayBoundary:
-    def test_mwf_cadence_on_sunday_2359(self):
+    """Граница суток для cadence-расписаний. Использует generate_launchd.schedule_fires_on."""
+
+    def test_single_day_cadence_off_on_sunday_2359(self):
         with freeze_time("2026-05-10 18:59:00", tz_offset=0):  # Sun 23:59 Almaty
             now = datetime.now(ALMATY_TZ)
             assert now.weekday() == 6  # sunday
-            assert not is_run_day("mon", now)
+            assert not schedule_fires_on({"day": "mon", "hour": 11, "minute": 30}, now)
 
-    def test_mwf_cadence_on_monday_0001(self):
+    def test_single_day_cadence_on_monday_0001(self):
         with freeze_time("2026-05-10 19:01:00", tz_offset=0):  # Mon 00:01 Almaty
             now = datetime.now(ALMATY_TZ)
             assert now.weekday() == 0  # monday
-            assert is_run_day("mon", now)
+            assert schedule_fires_on({"day": "mon", "hour": 11, "minute": 30}, now)
+
+    def test_mwf_list_cadence_on_wednesday(self):
+        with freeze_time("2026-05-13 06:00:00", tz_offset=0):  # Wed 11:00 Almaty
+            now = datetime.now(ALMATY_TZ)
+            assert now.weekday() == 2  # wednesday
+            entry = {"day": ["mon", "wed", "fri"], "hour": 11, "minute": 30}
+            assert schedule_fires_on(entry, now)
+
+    def test_mwf_list_cadence_off_on_tuesday(self):
+        with freeze_time("2026-05-12 06:00:00", tz_offset=0):  # Tue 11:00 Almaty
+            now = datetime.now(ALMATY_TZ)
+            assert now.weekday() == 1  # tuesday
+            entry = {"day": ["mon", "wed", "fri"], "hour": 11, "minute": 30}
+            assert not schedule_fires_on(entry, now)
+
+    def test_wildcard_fires_every_day(self):
+        with freeze_time("2026-05-12 06:00:00", tz_offset=0):  # Tuesday
+            now = datetime.now(ALMATY_TZ)
+            assert schedule_fires_on({"day": "*", "hour": 9, "minute": 0}, now)
 
 
 class TestStaleQueueAlert:

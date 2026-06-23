@@ -34,6 +34,10 @@ env/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
 
 # ============================================================
 # Test artifacts (auto-generated)

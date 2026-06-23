@@ -1,0 +1,17 @@
+{
+  "listings": [
+    {
+      "location_date_text": "Алматы - Сегодня 10:00",
+      "price_text": "850 000 тг.",
+      "title": "MacBook Pro 14 M3 Pro 36GB 1TB",
+      "url": "https://www.olx.kz/d/obyavlenie/macbook-pro-14-m3-pro-ID123.html"
+    },
+    {
+      "location_date_text": "Астана - Вчера 18:30",
+      "price_text": "550 000 тг.",
+      "title": "MacBook Air 13 M2 8GB 256GB",
+      "url": "https://www.olx.kz/d/obyavlenie/macbook-air-13-m2-ID456.html"
+    }
+  ],
+  "source": "olx_kz"
+}
