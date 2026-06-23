@@ -21,8 +21,10 @@ FAKE_CURL = """#!/bin/bash
 if [[ -n "${CURL_FAIL:-}" ]]; then
   exit 1
 fi
-# записываем каждый аргумент отдельной строкой для последующих ассертов
-printf '%s\\n' "$@" >> "$CURL_ARGS_FILE"
+# Аргументы пишем через NUL-разделитель: значение text= само содержит переносы
+# строк (заголовок Markdown + \\n + тело), поэтому '\\n' как разделитель не дал бы
+# восстановить полный аргумент. NUL в тексте появиться не может.
+printf '%s\\0' "$@" >> "$CURL_ARGS_FILE"
 echo '{"ok":true}'
 echo "${CURL_HTTP_CODE:-200}"
 """
@@ -66,6 +68,12 @@ def tg(tmp_path):
         import os
 
         env = dict(os.environ)
+        # Hermetic: не давать унаследованным TG_*-кредам/настройкам протечь в скрипт.
+        # tg_notify.sh читает ${TG_TOKEN:-} и т.п. из окружения, а sourcing пустого
+        # env-файла их не очищает — иначе missing-creds/opt-out ветки не отработают
+        # там, где эти переменные экспортированы (локально или в CI).
+        for var in ("TG_TOKEN", "TG_CHAT_ID", "TG_SUMMARY"):
+            env.pop(var, None)
         env["PATH"] = f"{bindir}:{env['PATH']}"
         env["DEAL_HUNTER_HOME"] = str(home)
         env["CURL_ARGS_FILE"] = str(args_file)
@@ -155,11 +163,13 @@ def test_curl_failure_logged_but_exit_0(tg):
 def test_message_truncated_to_4000(tg):
     long_msg = "A" * 5000
     tg(category="HOT_DEAL", message=long_msg)
-    # находим строку с text=... и проверяем, что тело не длиннее 4000
-    for line in tg.args_file.read_text().splitlines():
-        if line.startswith("text="):
-            body = line[len("text=") :]
-            assert len(body) <= 4000
-            break
-    else:
-        pytest.fail("no text= arg recorded from curl")
+    # Аргументы разделены NUL; восстанавливаем ПОЛНОЕ значение text= вместе со
+    # встроенными переносами строк (заголовок + \n + тело), иначе измерили бы
+    # только первую физическую строку и пропустили бы отказ усечения.
+    parts = tg.args_file.read_text().split("\0")
+    text_values = [p[len("text=") :] for p in parts if p.startswith("text=")]
+    assert text_values, "no text= arg recorded from curl"
+    # tg_notify.sh усекает FULL_MSG до 4000 символов (под лимит Telegram 4096)
+    assert len(text_values[0]) <= 4000
+    # без усечения тут было бы ~5014 символов — проверяем, что тело реально урезано
+    assert len(text_values[0]) < len(long_msg)
