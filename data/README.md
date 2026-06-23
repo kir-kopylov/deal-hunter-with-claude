@@ -47,7 +47,9 @@ $DEAL_HUNTER_HOME/
 python3 -m venv $DEAL_HUNTER_HOME/venv
 source $DEAL_HUNTER_HOME/venv/bin/activate
 pip install --upgrade pip
-pip install -r $DEAL_HUNTER_HOME/requirements.txt
+# requirements-dev.txt = рантайм (-r requirements.txt) + pytest и прочие
+# инструменты, нужные для smoke-тестов ниже (pytest -m unit ...).
+pip install -r $DEAL_HUNTER_HOME/requirements-dev.txt
 playwright install chromium
 ```
 
